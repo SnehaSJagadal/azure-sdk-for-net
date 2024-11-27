@@ -82,8 +82,11 @@ jobs:
           echo "##vso[task.setvariable variable=SkipDevBuildNumber]true"
         displayName: "Set SkipDevBuildNumber env variable"
       - template: /eng/common/pipelines/templates/steps/daily-dev-build-variable.yml
+
+      - template: /eng/common/pipelines/templates/steps/save-package-properties.yml
         parameters:
-          ServiceDirectory: ${{parameters.ServiceDirectory}}
+          ServiceDirectory: ${{ parameters.ServiceDirectory }}
+
       - pwsh: |
           # Reset SkipDevBuildNumber as empty
           $skipDevBuildNumber = ""
@@ -117,17 +120,6 @@ jobs:
           /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory)
           $(DiagnosticArguments)
         displayName: "Build and Package"
-
-      - task: Powershell@2
-        inputs:
-          filePath: $(Build.SourcesDirectory)/eng/common/scripts/Save-Package-Properties.ps1
-          arguments: >
-            -ServiceDirectory ${{parameters.ServiceDirectory}}
-            -OutDirectory $(Build.ArtifactStagingDirectory)/PackageInfo
-            -AddDevVersion:$$(SetDevVersion)
-          pwsh: true
-          workingDirectory: $(Pipeline.Workspace)
-        displayName: Update package properties with dev version
 
       - task: Powershell@2
         inputs:
