@@ -87,6 +87,11 @@ jobs:
         parameters:
           ServiceDirectory: ${{ parameters.ServiceDirectory }}
 
+      - template: /eng/pipelines/templates/steps/set-artifact-packages.yml
+        parameters:
+          PackageInfo: '$(Build.ArtifactStagingDirectory)/PackageInfo'
+          Artifacts: ${{ parameters.Artifacts }}
+
       - pwsh: |
           # Reset SkipDevBuildNumber as empty
           $skipDevBuildNumber = ""
@@ -105,9 +110,11 @@ jobs:
         displayName: 'Use Python 3.11'
         inputs:
           versionSpec: '3.11'
+
       - template: /eng/pipelines/templates/steps/dotnet-diagnostics.yml
         parameters:
           LogFilePath: $(Build.ArtifactStagingDirectory)/pack.binlog
+
       - script: >-
           dotnet pack eng/service.proj -warnaserror
           /p:ValidateRunApiCompat=true
