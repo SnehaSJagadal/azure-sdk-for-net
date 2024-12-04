@@ -120,7 +120,7 @@ jobs:
 
           # todo: resolve building more than necessary (each involved service over individual package within service)
           foreach ($service in $changedServices) {
-            Write-Host "Packing "
+            Write-Host "Packing $service"
             dotnet pack eng/service.proj -warnaserror `
               /p:ValidateRunApiCompat=true `
               /p:SDKType=${{ parameters.SDKType }} `
