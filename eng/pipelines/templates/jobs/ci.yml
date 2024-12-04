@@ -124,7 +124,6 @@ jobs:
             dotnet pack eng/service.proj -warnaserror `
               /p:ValidateRunApiCompat=true `
               /p:SDKType=${{ parameters.SDKType }} `
-              /p:ServiceDirectory=** `
               /p:IncludeTests=false `
               /p:PublicSign=false $(VersioningProperties) `
               /p:Configuration=$(BuildConfiguration) `
