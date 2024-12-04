@@ -116,11 +116,11 @@ jobs:
           LogFilePath: $(Build.ArtifactStagingDirectory)/pack.binlog
 
       - pwsh: >-
+          $changedServices = "$(ChangedServices)" -split ","
 
-          Get-ChildItem $(Build.ArtifactStagingDirectory)/PackageInfo -Recurse -Filter *.json | ForEach-Object {
-            $packageInfo = Get-Content -Raw $_.FullName | ConvertFrom-Json
-
-            Write-Host "Packing $($packageInfo.DirectoryPath)"
+          # todo: resolve building more than necessary (each involved service over individual package within service)
+          foreach ($service in $changedServices) {
+            Write-Host "Packing "
             dotnet pack eng/service.proj -warnaserror `
               /p:ValidateRunApiCompat=true `
               /p:SDKType=${{ parameters.SDKType }} `
@@ -129,7 +129,7 @@ jobs:
               /p:Configuration=$(BuildConfiguration) `
               /p:CommitSHA=$(Build.SourceVersion) `
               /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) `
-              /p:Project=$packageInfo.DirectoryPath `
+              /p:ServiceDirectory=$service `
               $(DiagnosticArguments)
           }
         displayName: "Build and Package"
