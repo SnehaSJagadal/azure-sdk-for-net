@@ -115,17 +115,24 @@ jobs:
         parameters:
           LogFilePath: $(Build.ArtifactStagingDirectory)/pack.binlog
 
-      - script: >-
-          dotnet pack eng/service.proj -warnaserror
-          /p:ValidateRunApiCompat=true
-          /p:SDKType=${{ parameters.SDKType }}
-          /p:ServiceDirectory=${{ parameters.ServiceDirectory }}
-          /p:IncludeTests=false
-          /p:PublicSign=false $(VersioningProperties)
-          /p:Configuration=$(BuildConfiguration)
-          /p:CommitSHA=$(Build.SourceVersion)
-          /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory)
-          $(DiagnosticArguments)
+      - pwsh: >-
+
+          Get-ChildItem $(Build.ArtifactStagingDirectory)/PackageInfo -Recurse -Filter *.json | ForEach-Object {
+            $packageInfo = Get-Content -Raw $_.FullName | ConvertFrom-Json
+
+            Write-Host "Packing $($packageInfo.DirectoryPath)"
+            dotnet pack eng/service.proj -warnaserror `
+              /p:ValidateRunApiCompat=true `
+              /p:SDKType=${{ parameters.SDKType }} `
+              /p:ServiceDirectory=** `
+              /p:IncludeTests=false `
+              /p:PublicSign=false $(VersioningProperties) `
+              /p:Configuration=$(BuildConfiguration) `
+              /p:CommitSHA=$(Build.SourceVersion) `
+              /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) `
+              /p:Project=$packageInfo.DirectoryPath `
+              $(DiagnosticArguments)
+          }
         displayName: "Build and Package"
 
       - task: Powershell@2
