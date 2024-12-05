@@ -1,6 +1,7 @@
 parameters:
   PackageInfo: ''
   Artifacts: []
+  IncludeIndirect: true
 steps:
   # Package-Properties folder contains the package properties for all discovered packages that were either A) affected by the PR or
   # B) explicitly present in the service directory. This repo splits the builds into two categories: "mgmt" and "dataplane". While
@@ -13,6 +14,7 @@ steps:
   # individual ci.yml and ci.mgmt.yml files.
   - pwsh: |
       $artifacts = '${{ convertToJson(parameters.Artifacts) }}' | ConvertFrom-Json
+      $includeIndirect = $${{ parameters.IncludeIndirect }}
       $knownArtifacts = @()
       if ($artifacts) {
         $knownArtifacts = $artifacts | ForEach-Object { $_.name }
@@ -20,6 +22,10 @@ steps:
 
       $packageProperties = Get-ChildItem -Recurse "${{ parameters.PackageInfo }}" *.json `
         | Where-Object { if($knownArtifacts) { $knownArtifacts -contains $_.Name.Replace(".json", "") } else { $true } }
+
+      if (-not $includeIndirect) {
+        $packageProperties = $packageProperties | Where-Object { $_.IncludedForValidation -eq $false }
+      }
 
       $pkgNames = $packageProperties | ForEach-Object { $_.Name.Replace(".json", "") }
 
@@ -30,6 +36,7 @@ steps:
     condition: eq(variables['ProjectNames'], '')
 
   - pwsh: |
+      $includeIndirect = $${{ parameters.IncludeIndirect }}
       # set changed services given the set of changed packages, this will mean that
       # ChangedServices will be appropriate for the batched set of packages if that is indeed how
       # we set the targeted artifacts
