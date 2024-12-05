@@ -115,10 +115,11 @@ jobs:
         parameters:
           LogFilePath: $(Build.ArtifactStagingDirectory)/pack.binlog
 
-      - pwsh: >-
+      - pwsh: |
           $changedServices = "$(ChangedServices)" -split ","
 
           # todo: resolve building more than necessary (each involved service over individual package within service)
+
           foreach ($service in $changedServices) {
             Write-Host "Packing $service"
             dotnet pack eng/service.proj -warnaserror `
