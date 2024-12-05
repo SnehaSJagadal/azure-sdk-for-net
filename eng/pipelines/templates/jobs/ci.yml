@@ -132,6 +132,7 @@ jobs:
               /p:CommitSHA=$(Build.SourceVersion) `
               /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) `
               /p:ServiceDirectory=* `
+              /p:Project=$package `
               $(DiagnosticArguments)
           }
         displayName: "Build and Package"
@@ -208,13 +209,32 @@ jobs:
 
       - template: /eng/common/pipelines/templates/steps/cache-ps-modules.yml
 
-      - template: /eng/common/pipelines/templates/steps/verify-samples.yml
+      - template: /eng/common/pipelines/templates/steps/save-package-properties.yml
         parameters:
           ServiceDirectory: ${{ parameters.ServiceDirectory }}
 
-      - template: /eng/common/pipelines/templates/steps/verify-readme.yml
+      - template: /eng/pipelines/templates/steps/set-artifact-packages.yml
         parameters:
-          ScanPath: $(Build.SourcesDirectory)/sdk/${{ parameters.ServiceDirectory }}
+          PackageInfo: '$(Build.ArtifactStagingDirectory)/PackageInfo'
+          Artifacts: ${{ parameters.Artifacts }}
+
+      - pwsh: |
+          # todo: we have individual packages that we can go after. Do we want to scan only under the changed package for Sample Metadata?
+          # there is a potential for loss of coverage here. Need to check a before/after with dumping the scanpaths.
+          $serviceDirectories = "$(ChangedServices)" -split ","
+          $ScanPaths = @()
+          foreach ($ServiceDirectory in $serviceDirectories) {
+            $ScanPath = [System.IO.Path]::Combine('$(Build.SourcesDirectory)', 'sdk', $ServiceDirectory)
+            Write-Host "Adding $ScanPath to the scanned paths"
+            $ScanPaths += $ScanPath
+          }
+          Get-ChildItem $ScanPaths -Filter *.md -Recurse | eng/common/scripts/Test-SampleMetadata.ps1 -AllowParentProducts
+        displayName: Verify sample metadata
+        workingDirectory: $(Build.SourcesDirectory)
+
+      - template: /eng/common/pipelines/templates/steps/verify-readmes.yml
+        parameters:
+          PackagePropertiesFolder: '$(Build.ArtifactStagingDirectory)/PackageInfo'
 
       - task: NodeTool@0
         inputs:
@@ -248,19 +268,27 @@ jobs:
         parameters:
           LogFilePath: $(Build.ArtifactStagingDirectory)/rebuild.binlog
 
-      - script: >-
-          dotnet build eng/service.proj -warnaserror
-          /t:rebuild
-          /p:DebugType=none
-          /p:SDKType=${{ parameters.SDKType }}
-          /p:ServiceDirectory=${{ parameters.ServiceDirectory }}
-          /p:IncludePerf=false
-          /p:IncludeStress=false
-          /p:PublicSign=false
-          /p:Configuration=$(BuildConfiguration)
-          /p:EnableSourceLink=false
-          /p:BuildSnippets=true
-          $(DiagnosticArguments)
+      - pwsh: |
+          # todo: resolve there a way that we can glob this together,
+          # todo: remove nowarn:NU1902 that popped up due to dependency on MessagePack that is cg moderate flagged
+          $packages = "$(ProjectNames)" -split ","
+
+          foreach ($package in $packages) {
+            Write-Host "Packing $package"
+            dotnet build eng/service.proj -warnaserror `
+              /t:rebuild `
+              /p:DebugType=none `
+              /p:SDKType=${{ parameters.SDKType }} `
+              /p:ServiceDirectory=* `
+              /p:IncludePerf=false `
+              /p:IncludeStress=false `
+              /p:PublicSign=false `
+              /p:Configuration=$(BuildConfiguration) `
+              /p:EnableSourceLink=false `
+              /p:BuildSnippets=true `
+              /p:Project=$package `
+              $(DiagnosticArguments)
+          }
         displayName: Build snippets
         condition: and(succeeded(), eq(${{ parameters.BuildSnippets }}, true))
 
