@@ -30,7 +30,7 @@ function processTestProject($projPath) {
 
   if ($testsIndex -gt 0) {
       # Reconstruct the path up to the directory just above 'tests'
-      $parentDirectory = ($pathSegments[0..($testsIndex - 1)] -join "/")
+      $parentDirectory = ($pathSegments[0..($testsIndex - 1)] -join [System.IO.Path]::DirectorySeparatorChar)
       return $parentDirectory
   } else {
       Write-Error "Unable to retrieve a package directory for this this test project: $projPath"
