@@ -148,7 +148,7 @@ jobs:
 
 
       - pwsh: |
-          # todo: resolve there a way that we can glob this together,
+          # todo: glob this together (see reference items above. we can do this)
 
           # todo: remove nowarn:NU1902 that popped up due to dependency on MessagePack that is cg moderate flagged
           $packages = "$(ProjectNames)" -split ","
@@ -269,6 +269,7 @@ jobs:
       - template: /eng/common/pipelines/templates/steps/verify-readmes.yml
         parameters:
           PackagePropertiesFolder: '$(Build.ArtifactStagingDirectory)/PackageInfo'
+          IncludeIndirect: false
 
       - task: NodeTool@0
         inputs:
@@ -285,25 +286,34 @@ jobs:
           arguments: 'restore'
           workingDirectory: '$(Agent.BuildDirectory)'
 
-      - task: PowerShell@2
-        displayName: "Verify generated code"
+      - pwsh: |
+          $failed = $false
+          $serviceDirectories = "$(ChangedServices)" -split ","
+          $ScanPaths = @()
+          foreach ($ServiceDirectory in $serviceDirectories) {
+            ./eng/scripts/CodeChecks.ps1 `
+              -ServiceDirectory $ServiceDirectory `
+              -SDKType ${{ parameters.SDKType }} `
+              -SpellCheckPublicApiSurface `
+
+            if ($LASTEXITCODE -ne 0) {
+              $failed = $true
+            }
+          }
+
+          if ($failed) {
+            exit 1
+          }
+        displayName: Verify Generated Code
         env:
           EnableSourceLink: false
-        inputs:
-          filePath: "eng/scripts/CodeChecks.ps1"
-          arguments: >
-            -ServiceDirectory ${{ parameters.ServiceDirectory }}
-            -SDKType ${{ parameters.SDKType }}
-            -SpellCheckPublicApiSurface
-          pwsh: true
-          failOnStderr: false
 
       - template: /eng/pipelines/templates/steps/dotnet-diagnostics.yml
         parameters:
           LogFilePath: $(Build.ArtifactStagingDirectory)/rebuild.binlog
 
       - pwsh: |
-          # todo: resolve there a way that we can glob this together,
+          # todo: there is a way to glob this together, see reference above in 'Build'
           # todo: remove nowarn:NU1902 that popped up due to dependency on MessagePack that is cg moderate flagged
           $packages = "$(ProjectNames)" -split ","
 
