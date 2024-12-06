@@ -22,10 +22,8 @@ $DependencyCalculationPackages = @(
 function processTestProject($projPath) {
   $cleanPath = $projPath -replace "^\$\(RepoRoot\)", ""
 
-  $normalizedPath = $cleanPath -replace "[\\/]", "/"
-
   # Split the path into segments
-  $pathSegments = $normalizedPath -split "/"
+  $pathSegments = $cleanPath -split "[\\/]"
 
   # Find the index of the 'tests' directory
   $testsIndex = $pathSegments.IndexOf("tests")
@@ -74,6 +72,7 @@ function Get-AllPackageInfoFromRepo($serviceDirectory)
     $pkgProp.SdkType = $sdkType
     $pkgProp.IsNewSdk = ($isNewSdk -eq 'true')
     $pkgProp.ArtifactName = $pkgName
+    $pkgProp.IncludedForValidation = $false
 
     if ($pkgProp.Name -in $DependencyCalculationPackages) {
       Write-Host "In the additional dependency grabber list, calculating dependencies for $($pkgProp.Name)"

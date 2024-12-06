@@ -116,8 +116,40 @@ jobs:
         parameters:
           LogFilePath: $(Build.ArtifactStagingDirectory)/pack.binlog
 
+      # adjustments to the Service proj. We want to be able to accept
+      # a list of projects as an argument, and only build those
+      # <PropertyGroup>
+      #     <Projects Condition="'$(Projects)' == ''">$(Project)</Projects>
+      #     <Projects Condition="'$(Projects)' != ''">$(Projects)</Projects>
+      #     <IncludeTests Condition="'$(IncludeTests)' == ''">true</IncludeTests>
+      #     <IncludeSrc Condition="'$(IncludeSrc)' == ''">true</IncludeSrc>
+      #     <!-- Other existing properties -->
+      #   </PropertyGroup>
+
+      #   <ItemGroup>
+      #     <!-- Split Projects into individual items -->
+      #     <SplitProjects Include="$([System.String]::Split('$(Projects)', ';'))" />
+      #   </ItemGroup>
+
+      #   <Target Name="ResolveProjects">
+      #     <!-- Dynamically resolve ProjectReference for each project -->
+      #     <ItemGroup>
+      #       <ProjectReference Include="..\sdk\$(ServiceDirectory)\%(SplitProjects.Identity)\src\**\*.csproj" Exclude="@(MgmtExcludePaths)" Condition="'$(IncludeSrc)' == 'true'" />
+      #       <ProjectReference Include="..\sdk\$(ServiceDirectory)\%(SplitProjects.Identity)\tests\**\*.csproj" Exclude="@(MgmtExcludePaths)" Condition="'$(IncludeTests)' == 'true'" />
+      #       <!-- Other includes for samples, perf, etc., as needed -->
+      #     </ItemGroup>
+      #   </Target>
+
+      #   <Target Name="BuildResolvedProjects" DependsOnTargets="ResolveProjects">
+      #     <MSBuild Projects="@(ProjectReference)"
+      #              Targets="Build"
+      #              BuildInParallel="$(BuildInParallel)" />
+      #   </Target>
+
+
       - pwsh: |
           # todo: resolve there a way that we can glob this together,
+
           # todo: remove nowarn:NU1902 that popped up due to dependency on MessagePack that is cg moderate flagged
           $packages = "$(ProjectNames)" -split ","
 
@@ -218,6 +250,7 @@ jobs:
         parameters:
           PackageInfo: '$(Build.ArtifactStagingDirectory)/PackageInfo'
           Artifacts: ${{ parameters.Artifacts }}
+          IncludeIndirect: false
 
       - pwsh: |
           # todo: we have individual packages that we can go after. Do we want to scan only under the changed package for Sample Metadata?
