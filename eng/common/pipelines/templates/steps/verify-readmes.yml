@@ -21,6 +21,7 @@ steps:
 - pwsh: |
     $includeIndirect = $${{ parameters.IncludeIndirect }}
     $packageProperties = Get-ChildItem -Recurse "${{ parameters.PackagePropertiesFolder }}" *.json
+    $paths = @()
 
     if (-not $includeIndirect) {
       $packageProperties = $packageProperties | Where-Object { (Get-Content -Raw $_ | ConvertFrom-Json).IncludedForValidation -eq $false }

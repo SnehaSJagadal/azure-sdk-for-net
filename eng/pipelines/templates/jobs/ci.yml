@@ -286,6 +286,7 @@ jobs:
           arguments: 'restore'
           workingDirectory: '$(Agent.BuildDirectory)'
 
+      # todo: emplace under CodeChecks.ps1 passing an argument of PackageInfoFolder
       - pwsh: |
           $failed = $false
           $serviceDirectories = "$(ChangedServices)" -split ","
