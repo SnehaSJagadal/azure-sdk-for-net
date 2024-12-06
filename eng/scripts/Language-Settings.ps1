@@ -73,17 +73,23 @@ function Get-AllPackageInfoFromRepo($serviceDirectory)
     $pkgProp.IsNewSdk = ($isNewSdk -eq 'true')
     $pkgProp.ArtifactName = $pkgName
     $pkgProp.IncludedForValidation = $false
+    $pkgProp.DirectoryPath = ($pkgProp.DirectoryPath)
 
     if ($pkgProp.Name -in $DependencyCalculationPackages) {
       Write-Host "In the additional dependency grabber list, calculating dependencies for $($pkgProp.Name)"
       $outputFilePath = Join-Path $RepoRoot "$($pkgProp.Name)_dependencylist.txt"
-      # calculate the dependent packages
-      dotnet build /t:ProjectDependsOn ./eng/service.proj `
-        /p:TestDependsOnDependency="$($pkgProp.Name)" `
-        /p:IncludeSrc=false /p:IncludeStress=false /p:IncludeSamples=false  `
-        /p:IncludePerf=false /p:RunApiCompat=false `
-        /p:InheritDocEnabled=false /p:BuildProjectReferences=false `
-        /p:OutputProjectFilePath="$outputFilePath" | Out-Null
+
+      if (!(Test-Path $outputFilePath)) {
+        # calculate the dependent packages
+        dotnet build /t:ProjectDependsOn ./eng/service.proj `
+          /p:TestDependsOnDependency="$($pkgProp.Name)" `
+          /p:IncludeSrc=false /p:IncludeStress=false /p:IncludeSamples=false  `
+          /p:IncludePerf=false /p:RunApiCompat=false `
+          /p:InheritDocEnabled=false /p:BuildProjectReferences=false `
+          /p:OutputProjectFilePath="$outputFilePath" | Out-Null
+      }
+
+      $pkgRelPath = $pkgProp.DirectoryPath.Replace($RepoRoot, "").TrimStart("\/")
 
       if ($LASTEXITCODE -eq 0) {
         if (Test-Path $outputFilePath) {
@@ -92,7 +98,7 @@ function Get-AllPackageInfoFromRepo($serviceDirectory)
 
           foreach ($projectLine in $dependentProjects) {
             $testPackage = processTestProject($projectLine)
-            if ($testPackage) {
+            if ($testPackage -and $testPackage -ne $pkgRelPath) {
               if ($testPackages[$testPackage]) {
                 $testPackages[$testPackage] += 1
               }
