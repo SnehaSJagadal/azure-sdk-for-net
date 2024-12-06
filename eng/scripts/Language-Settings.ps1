@@ -75,6 +75,12 @@ function Get-AllPackageInfoFromRepo($serviceDirectory)
     $pkgProp.IncludedForValidation = $false
     $pkgProp.DirectoryPath = ($pkgProp.DirectoryPath)
 
+    $allPackageProps += $pkgProp
+  }
+
+  $includedPkgs = $allPackageProps | ForEach-Object { $_.DirectoryPath.Replace($RepoRoot, "").TrimStart("\/") }
+
+  foreach ($pkgProp in $allPackageProps) {
     if ($pkgProp.Name -in $DependencyCalculationPackages) {
       Write-Host "In the additional dependency grabber list, calculating dependencies for $($pkgProp.Name)"
       $outputFilePath = Join-Path $RepoRoot "$($pkgProp.Name)_dependencylist.txt"
@@ -89,8 +95,6 @@ function Get-AllPackageInfoFromRepo($serviceDirectory)
           /p:OutputProjectFilePath="$outputFilePath" | Out-Null
       }
 
-      $pkgRelPath = $pkgProp.DirectoryPath.Replace($RepoRoot, "").TrimStart("\/")
-
       if ($LASTEXITCODE -eq 0) {
         if (Test-Path $outputFilePath) {
           $dependentProjects = Get-Content $outputFilePath
@@ -98,7 +102,7 @@ function Get-AllPackageInfoFromRepo($serviceDirectory)
 
           foreach ($projectLine in $dependentProjects) {
             $testPackage = processTestProject($projectLine)
-            if ($testPackage -and $testPackage -ne $pkgRelPath) {
+            if ($testPackage -and $testPackage -notin $includedPkgs) {
               if ($testPackages[$testPackage]) {
                 $testPackages[$testPackage] += 1
               }
@@ -116,9 +120,8 @@ function Get-AllPackageInfoFromRepo($serviceDirectory)
         Write-Host "Failed to calculate dependencies for $($pkgProp.Name)"
       }
     }
-
-    $allPackageProps += $pkgProp
   }
+
 
   return $allPackageProps
 }
