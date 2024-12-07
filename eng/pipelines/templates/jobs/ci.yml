@@ -154,7 +154,7 @@ jobs:
           $packages = "$(ProjectNames)" -split ","
 
           foreach ($package in $packages) {
-            Write-Host "Packing $package"
+            Write-Host "packing $package"
             dotnet pack eng/service.proj -warnaserror `
               -nowarn:NU1902 `
               /p:ValidateRunApiCompat=true `
@@ -316,22 +316,21 @@ jobs:
       - pwsh: |
           # todo: there is a way to glob this together, see reference above in 'Build'
           # todo: remove nowarn:NU1902 that popped up due to dependency on MessagePack that is cg moderate flagged
-          $packages = "$(ProjectNames)" -split ","
+          $services = "$(ChangedServices)" -split ","
 
-          foreach ($package in $packages) {
-            Write-Host "Packing $package"
+          foreach ($service in $services) {
+            Write-Host "building $service"
             dotnet build eng/service.proj -warnaserror `
               /t:rebuild `
               /p:DebugType=none `
               /p:SDKType=${{ parameters.SDKType }} `
-              /p:ServiceDirectory=* `
+              /p:ServiceDirectory=$service `
               /p:IncludePerf=false `
               /p:IncludeStress=false `
               /p:PublicSign=false `
               /p:Configuration=$(BuildConfiguration) `
               /p:EnableSourceLink=false `
               /p:BuildSnippets=true `
-              /p:Project=$package `
               $(DiagnosticArguments)
           }
         displayName: Build snippets
