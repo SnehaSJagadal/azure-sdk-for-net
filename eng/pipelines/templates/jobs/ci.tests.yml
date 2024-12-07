@@ -101,6 +101,12 @@ jobs:
       - ${{ each step in parameters.TestSetupSteps }}:
         - ${{ each pair in step }}:
             ${{ pair.key }}: ${{ pair.value }}
+
+      - template: /eng/pipelines/templates/steps/set-artifact-packages.yml
+        parameters:
+          PackageInfo: '$(Build.ArtifactStagingDirectory)/PackageInfo'
+          Artifacts: ${{ parameters.Artifacts }}
+
       - template: /eng/pipelines/templates/steps/install-dotnet.yml
         parameters:
           NuGetCacheKey: Test

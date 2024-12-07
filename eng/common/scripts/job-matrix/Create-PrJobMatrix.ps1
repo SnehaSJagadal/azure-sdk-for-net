@@ -37,12 +37,13 @@ param (
   [Parameter(Mandatory = $False)][string] $DisplayNameFilter,
   [Parameter(Mandatory = $False)][array] $Filters,
   [Parameter(Mandatory = $False)][array] $Replace,
+  [Parameter(Mandatory = $False)][int] $PkgsPerJob = 10,
   [Parameter()][switch] $CI = ($null -ne $env:SYSTEM_TEAMPROJECTID)
 )
 
 . $PSScriptRoot/job-matrix-functions.ps1
 . $PSScriptRoot/../Helpers/Package-Helpers.ps1
-$BATCHSIZE = 10
+$BATCHSIZE = $PkgsPerJob
 
 if (!(Test-Path $PackagePropertiesFolder)) {
   Write-Error "Package Properties folder doesn't exist"

@@ -48,6 +48,9 @@ parameters:
 - name: PRMatrixSetting
   type: string
   default: 'ArtifactPackageNames'
+- name: PackagesPerPRJob
+  type: number
+  default: 10
 # Mappings to OS name required at template compile time by 1es pipeline templates
 - name: Pools
   type: object
@@ -136,6 +139,7 @@ jobs:
               -DisplayNameFilter '$(displayNameFilter)' `
               -Filters '${{ join(''',''', parameters.MatrixFilters) }}', 'container=^$', 'SupportedClouds=^$|${{ parameters.CloudConfig.Cloud }}', 'Pool=${{ pool.filter }}' `
               -Replace '${{ join(''',''', parameters.MatrixReplace) }}'
+              -PackagesPerPRJob ${{ parameters.PackagesPerPRJob }}
           displayName: Create ${{ pool.name }} PR Matrix
           name: vm_job_matrix_pr_${{ pool.name }}
 

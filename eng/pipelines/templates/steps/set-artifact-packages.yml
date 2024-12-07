@@ -12,6 +12,8 @@ steps:
   # while in the integration period. After we disable all the public `net - <service> - ci` builds, only the `net - pullrequest` build WONT provide
   # an artifact list, which will allow the expand/contract. Meanwhile the internal builds will continue to provide the artifact list from their
   # individual ci.yml and ci.mgmt.yml files.
+
+  # todo: we can simply generate a projectlistoverride file and invoke it with pack. I think that is what I should be doing here
   - pwsh: |
       $artifacts = '${{ convertToJson(parameters.Artifacts) }}' | ConvertFrom-Json
       $includeIndirect = $${{ parameters.IncludeIndirect }}
