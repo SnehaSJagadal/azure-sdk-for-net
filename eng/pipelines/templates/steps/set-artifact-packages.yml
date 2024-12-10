@@ -50,6 +50,15 @@ steps:
       $changedServicesArray = $packageProperties | Where-Object { $packageSet -contains $_.ArtifactName }
         | ForEach-Object { $_.ServiceDirectory } | Get-Unique
 
+      $changedProjects = $packageProperties | Where-Object { $packageSet -contains $_.ArtifactName }
+        | ForEach-Object { $_.DirectoryPath }
+
+      $projectListFileContent = ($changedProjects | ForEach-Object { "`$(RepoRoot)$_" } | Sort-Object) -join "`n"
+
+      Write-Host $projectListFileContent
+      Set-Content -Path "$(Pipeline.Workspace)/projectlistoverride.txt"
+      Write-Host "##vso[task.setvariable variable=ProjectListOverrideFile;]$(Pipeline.Workspace)/projectlistoverride.txt"
+
       $changedServices = $changedServicesArray -join ","
       Write-Host "##vso[task.setvariable variable=ChangedServices;]$changedServices"
 

@@ -148,8 +148,6 @@ jobs:
 
 
       - pwsh: |
-          # todo: glob this together (see reference items above. we can do this)
-
           # todo: remove nowarn:NU1902 that popped up due to dependency on MessagePack that is cg moderate flagged
           $packages = "$(ProjectNames)" -split ","
 
@@ -374,30 +372,31 @@ jobs:
             BaselineFilePath: $(Build.sourcesdirectory)/eng/dotnet.gdnbaselines
             ServiceDirectory: ${{ parameters.ServiceDirectory }}
 
-    - template: /eng/common/pipelines/templates/jobs/generate-job-matrix.yml
-      parameters:
-        GenerateJobName: generate_target_service_test_matrix
-        JobTemplatePath: /eng/pipelines/templates/jobs/ci.tests.yml
-        MatrixConfigs: ${{ parameters.MatrixConfigs }}
-        MatrixFilters: ${{ parameters.MatrixFilters }}
-        MatrixReplace: ${{ parameters.MatrixReplace }}
-        CloudConfig:
-          Cloud: public
-        ${{ if eq(parameters.ServiceDirectory, 'auto') }}:
-          SparseCheckoutPaths:
-            - "/*"
-            - "!SessionRecords"
-          EnablePRGeneration: true
-          PackagesPerPRJob: 20
-          PreGenerationSteps:
-            - template: /eng/common/pipelines/templates/steps/save-package-properties.yml
-              parameters:
-                ServiceDirectory: ${{parameters.ServiceDirectory}}
-        AdditionalParameters:
-          SDKType: ${{ parameters.SDKType }}
-          ServiceDirectory: ${{ parameters.ServiceDirectory }}
-          TestSetupSteps: ${{ parameters.TestSetupSteps }}
-          TestTimeoutInMinutes: ${{ parameters.TestTimeoutInMinutes }}
+    # temporarily comment to figure out the projectlistoverridefile for builds
+    # - template: /eng/common/pipelines/templates/jobs/generate-job-matrix.yml
+    #   parameters:
+    #     GenerateJobName: generate_target_service_test_matrix
+    #     JobTemplatePath: /eng/pipelines/templates/jobs/ci.tests.yml
+    #     MatrixConfigs: ${{ parameters.MatrixConfigs }}
+    #     MatrixFilters: ${{ parameters.MatrixFilters }}
+    #     MatrixReplace: ${{ parameters.MatrixReplace }}
+    #     CloudConfig:
+    #       Cloud: public
+    #     ${{ if eq(parameters.ServiceDirectory, 'auto') }}:
+    #       SparseCheckoutPaths:
+    #         - "/*"
+    #         - "!SessionRecords"
+    #       EnablePRGeneration: true
+    #       PackagesPerPRJob: 20
+    #       PreGenerationSteps:
+    #         - template: /eng/common/pipelines/templates/steps/save-package-properties.yml
+    #           parameters:
+    #             ServiceDirectory: ${{parameters.ServiceDirectory}}
+    #     AdditionalParameters:
+    #       SDKType: ${{ parameters.SDKType }}
+    #       ServiceDirectory: ${{ parameters.ServiceDirectory }}
+    #       TestSetupSteps: ${{ parameters.TestSetupSteps }}
+    #       TestTimeoutInMinutes: ${{ parameters.TestTimeoutInMinutes }}
 
     # this entire section is no longer necessary, as dependencies are now generated within the language-settings Get-AllPkgProperties
     # functionality populating AdditionalPackagesForValidation
