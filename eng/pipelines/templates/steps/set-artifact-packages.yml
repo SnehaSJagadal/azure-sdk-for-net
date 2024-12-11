@@ -49,17 +49,18 @@ steps:
 
       $changedServicesArray = $packageProperties | Where-Object { $packageSet -contains $_.ArtifactName }
         | ForEach-Object { $_.ServiceDirectory } | Get-Unique
+      $changedServices = $changedServicesArray -join ","
 
       $changedProjects = $packageProperties | Where-Object { $packageSet -contains $_.ArtifactName }
         | ForEach-Object { $_.DirectoryPath }
 
       $projectListFileContent = ($changedProjects | ForEach-Object { "`$(RepoRoot)$_" } | Sort-Object) -join "`n"
-
+      $projectListLocation = Join-Path "$(Build.SourcesDirectory)" "projectlistoverride.txt"
       Write-Host $projectListFileContent
-      Set-Content -Path "$(Pipeline.Workspace)/projectlistoverride.txt"
-      Write-Host "##vso[task.setvariable variable=ProjectListOverrideFile;]$(Pipeline.Workspace)/projectlistoverride.txt"
 
-      $changedServices = $changedServicesArray -join ","
+      Set-Content -Path "$projectListLocation" -Value $projectListFileContent
+
+      Write-Host "##vso[task.setvariable variable=ProjectListOverrideFile;]$projectListLocation"
       Write-Host "##vso[task.setvariable variable=ChangedServices;]$changedServices"
 
       Write-Host "This run is targeting: `n$(ProjectNames) in [$changedServices]"
