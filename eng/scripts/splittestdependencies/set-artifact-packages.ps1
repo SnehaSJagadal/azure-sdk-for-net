@@ -26,7 +26,8 @@ $projectGroups = @()
 $projectGroups += ,$projectsForGeneration
 $outputFiles = Write-Test-Dependency-Group-To-Files -ProjectFileConfigName "packages" -ProjectGroups $projectGroups -MatrixOutputFolder $OutputPath
 
-Get-Content $outputFiles[0] | Write-Host
+# debug, will remove
+Get-ChildItem -Recurse $OutputPath | ForEach-Object { Get-Content -Raw -Path $_.FullName | Write-Host }
 
 Write-Host "##vso[task.setvariable variable=ProjectListOverrideFile;]$OutputPath/$($outputFiles[0])"
 Write-Host "##vso[task.setvariable variable=ChangedServices;]$changedServices"
