@@ -26,6 +26,8 @@ $projectGroups = @()
 $projectGroups += ,$projectsForGeneration
 $outputFiles = Write-Test-Dependency-Group-To-Files -ProjectFileConfigName "packages" -ProjectGroups $projectGroups -MatrixOutputFolder $OutputPath
 
+Get-Content $outputFiles[0] | Write-Host
+
 Write-Host "##vso[task.setvariable variable=ProjectListOverrideFile;]$OutputPath/$($outputFiles[0])"
 Write-Host "##vso[task.setvariable variable=ChangedServices;]$changedServices"
 Write-Host "This run is targeting: $ProjectNames in [$changedServices]"
