@@ -38,31 +38,9 @@ steps:
     condition: eq(variables['ProjectNames'], '')
 
   - pwsh: |
-      $includeIndirect = $${{ parameters.IncludeIndirect }}
-      # set changed services given the set of changed packages, this will mean that
-      # ChangedServices will be appropriate for the batched set of packages if that is indeed how
-      # we set the targeted artifacts
-      $packageProperties = Get-ChildItem -Recurse "${{ parameters.PackageInfo }}" *.json `
-        | Foreach-Object { Get-Content -Raw -Path $_.FullName | ConvertFrom-Json }
-
-      $packageSet = "$(ProjectNames)" -split ","
-
-      $changedServicesArray = $packageProperties | Where-Object { $packageSet -contains $_.ArtifactName }
-        | ForEach-Object { $_.ServiceDirectory } | Get-Unique
-      $changedServices = $changedServicesArray -join ","
-
-      $changedProjects = $packageProperties | Where-Object { $packageSet -contains $_.ArtifactName }
-        | ForEach-Object { $_.DirectoryPath }
-
-      $projectListFileContent = ($changedProjects | ForEach-Object { "`$(RepoRoot)$_" } | Sort-Object) -join "`n"
-      $projectListLocation = Join-Path "$(Build.SourcesDirectory)" "projectlistoverride.txt"
-      Write-Host $projectListFileContent
-
-      Set-Content -Path "$projectListLocation" -Value $projectListFileContent
-
-      Write-Host "##vso[task.setvariable variable=ProjectListOverrideFile;]$projectListLocation"
-      Write-Host "##vso[task.setvariable variable=ChangedServices;]$changedServices"
-
-      Write-Host "This run is targeting: `n$(ProjectNames) in [$changedServices]"
-    displayName: Resolve Targeted Packages
+      ./eng/scripts/splittestdependencies/set-artifact-packages.ps1 `
+        -ProjectNames "$(ProjectNames)" `
+        -PackageInfoFolder "${{ parameters.PackageInfo }}" `
+        -OutputPath $(Build.SourcesDirectory)/projlist
+    displayName: Resolve Service and Project List
     condition: ne(variables['ProjectNames'], '')
