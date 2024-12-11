@@ -28,13 +28,13 @@ $projectGroups = @()
 $projectGroups += ,$projectsForGeneration
 
 # todo: refactor write-test-dependency-group to take in a list of project files only and generate a single project file
-$outputFiles = Write-Test-Dependency-Group-To-Files -ProjectFileConfigName "packages" -ProjectGroups $projectGroups -MatrixOutputFolder $OutputPath
+$outputFile = (Write-Test-Dependency-Group-To-Files -ProjectFileConfigName "packages" -ProjectGroups $projectGroups -MatrixOutputFolder $OutputPath)[0]
 
 # debug, will remove
 Get-ChildItem -Recurse $OutputPath | ForEach-Object { Write-Host "Dumping $($_.FullName)"; Get-Content -Raw -Path $_.FullName | Write-Host }
 
 # the projectlistoverride file must be provided as a relative path
-$relativeOutputPath = [System.IO.Path]::GetRelativePath($RepoRoot, "$OutputPath/$outputFiles[0]")
+$relativeOutputPath = [System.IO.Path]::GetRelativePath($RepoRoot, "$OutputPath/$outputFile")
 
 Write-Host "##vso[task.setvariable variable=ProjectListOverrideFile;]$relativeOutputPath"
 Write-Host "##vso[task.setvariable variable=ChangedServices;]$changedServices"
