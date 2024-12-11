@@ -146,26 +146,19 @@ jobs:
       #              BuildInParallel="$(BuildInParallel)" />
       #   </Target>
 
-
       - pwsh: |
-          # todo: remove nowarn:NU1902 that popped up due to dependency on MessagePack that is cg moderate flagged
-          $packages = "$(ProjectNames)" -split ","
-
-          foreach ($package in $packages) {
-            Write-Host "packing $package"
-            dotnet pack eng/service.proj -warnaserror `
-              -nowarn:NU1902 `
-              /p:ValidateRunApiCompat=true `
-              /p:SDKType=${{ parameters.SDKType }} `
-              /p:IncludeTests=false `
-              /p:PublicSign=false $(VersioningProperties) `
-              /p:Configuration=$(BuildConfiguration) `
-              /p:CommitSHA=$(Build.SourceVersion) `
-              /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) `
-              /p:ServiceDirectory=* `
-              /p:Project=$package `
-              $(DiagnosticArguments)
-          }
+          dotnet pack eng/service.proj -warnaserror `
+            -nowarn:NU1902 `
+            /p:ValidateRunApiCompat=true `
+            /p:SDKType=${{ parameters.SDKType }} `
+            /p:IncludeTests=false `
+            /p:PublicSign=false $(VersioningProperties) `
+            /p:Configuration=$(BuildConfiguration) `
+            /p:CommitSHA=$(Build.SourceVersion) `
+            /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) `
+            /p:ServiceDirectory=* `
+            /p:ProjectListOverrideFile=$(ProjectListOverrideFile) `
+            $(DiagnosticArguments)
         displayName: "Build and Package"
 
       - task: Powershell@2
